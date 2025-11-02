@@ -1,0 +1,64 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+venv
+new_venv
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.pytest_cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.venv
+.cache
+.mypy_cache
+.dmypy.json
+dmypy.json
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Development files
+.pre-commit-config.yaml
+.github/
+tests/
+.pytest_cache/
+.mypy_cache/
+
+# License
+LICENSE
+
+# Docker
+Dockerfile*
+docker-compose*.yml

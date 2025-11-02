@@ -39,7 +39,7 @@ async def main():
     mm = MonarchMoney()
     
     try:
-        # Clear any existing sessions (both old pickle files and keyring)
+        # Clear any existing sessions (both old pickle files and .env file)
         secure_session.delete_token()
         print("🗑️ Cleared existing secure sessions")
         
@@ -132,22 +132,22 @@ async def main():
                 print("Try updating the library: pip install --upgrade monarchmoney")
                 return
         
-        # Save session securely to keyring
+        # Save session securely to .env file
         try:
-            print(f"\n🔐 Saving session securely to system keyring...")
+            print(f"\n🔐 Saving session securely to .env file...")
             secure_session.save_authenticated_session(mm)
-            print(f"✅ Session saved securely to keyring!")
-                
+            print(f"✅ Session saved securely to .env file!")
+
         except Exception as save_error:
-            print(f"❌ Could not save session to keyring: {save_error}")
+            print(f"❌ Could not save session to .env file: {save_error}")
             print("You may need to run the login again.")
         
         print("\n🎉 Setup complete! You can now use these tools in Claude Desktop:")
-        print("   • get_accounts - View all your accounts")  
+        print("   • get_accounts - View all your accounts")
         print("   • get_transactions - Recent transactions")
         print("   • get_budgets - Budget information")
         print("   • get_cashflow - Income/expense analysis")
-        print("\n💡 Session will persist across Claude restarts!")
+        print("\n💡 Session token saved to .env file and will persist across Claude restarts!")
         
     except Exception as e:
         print(f"\n❌ Login failed: {e}")

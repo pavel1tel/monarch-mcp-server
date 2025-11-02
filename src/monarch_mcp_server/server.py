@@ -16,6 +16,7 @@ import mcp.types as types
 from monarchmoney import MonarchMoney, RequireMFAException
 from pydantic import BaseModel, Field
 from monarch_mcp_server.secure_session import secure_session
+import typer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
-# Initialize FastMCP server
+# Initialize FastMCP server with default settings
 mcp = FastMCP("Monarch Money MCP Server")
 
 
@@ -60,7 +61,7 @@ async def get_monarch_client() -> MonarchMoney:
     client = secure_session.get_authenticated_client()
 
     if client is not None:
-        logger.info("✅ Using authenticated client from secure keyring storage")
+        logger.info("✅ Using authenticated client from secure environment variable storage")
         return client
 
     # If no secure session, try environment credentials
@@ -98,7 +99,7 @@ def setup_authentication() -> str:
    • Email and password
    • 2FA code if you have MFA enabled
 
-3️⃣ Session will be saved automatically and last for weeks
+3️⃣ Session will be saved to .env file and last for weeks
 
 4️⃣ Start using Monarch tools in Claude Desktop:
    • get_accounts - View all accounts
@@ -107,19 +108,19 @@ def setup_authentication() -> str:
 
 ✅ Session persists across Claude restarts
 ✅ No need to re-authenticate frequently
-✅ All credentials stay secure in terminal"""
+✅ All credentials stay secure in .env file"""
 
 
 @mcp.tool()
 def check_auth_status() -> str:
     """Check if already authenticated with Monarch Money."""
     try:
-        # Check if we have a token in the keyring
+        # Check if we have a token in the environment
         token = secure_session.load_token()
         if token:
-            status = "✅ Authentication token found in secure keyring storage\n"
+            status = "✅ Authentication token found in secure environment variable storage\n"
         else:
-            status = "❌ No authentication token found in keyring\n"
+            status = "❌ No authentication token found in environment variables\n"
 
         email = os.getenv("MONARCH_EMAIL")
         if email:
@@ -136,19 +137,19 @@ def check_auth_status() -> str:
 
 @mcp.tool()
 def debug_session_loading() -> str:
-    """Debug keyring session loading issues."""
+    """Debug environment variable session loading issues."""
     try:
-        # Check keyring access
+        # Check environment variable access
         token = secure_session.load_token()
         if token:
-            return f"✅ Token found in keyring (length: {len(token)})"
+            return f"✅ Token found in environment variables (length: {len(token)})"
         else:
-            return "❌ No token found in keyring. Run login_setup.py to authenticate."
+            return "❌ No token found in environment variables. Run login_setup.py to authenticate."
     except Exception as e:
         import traceback
 
         error_details = traceback.format_exc()
-        return f"❌ Keyring access failed:\nError: {str(e)}\nType: {type(e)}\nTraceback:\n{error_details}"
+        return f"❌ Environment variable access failed:\nError: {str(e)}\nType: {type(e)}\nTraceback:\n{error_details}"
 
 
 @mcp.tool()
@@ -437,8 +438,47 @@ def refresh_accounts() -> str:
         return f"Error refreshing accounts: {str(e)}"
 
 
+# Create typer app for CLI
+cli_app = typer.Typer()
+
+
+@cli_app.command()
+def run(
+    transport: str = typer.Option("stdio", help="Transport protocol: stdio, http, or sse"),
+    host: str = typer.Option("0.0.0.0", help="Host for HTTP/SSE server"),
+    port: int = typer.Option(8080, help="Port for HTTP/SSE server"),
+    path: str = typer.Option("/mcp", help="Path for HTTP server"),
+):
+    """Run the Monarch Money MCP Server."""
+    logger.info(f"Starting Monarch Money MCP Server with {transport} transport...")
+
+    try:
+        if transport == "http":
+            logger.info(f"Starting HTTP server on {host}:{port}{path}")
+            # Configure HTTP settings
+            mcp.settings.host = host
+            mcp.settings.port = port
+            mcp.settings.streamable_http_path = path
+            # Run the HTTP server
+            import asyncio
+            asyncio.run(mcp.run_streamable_http_async())
+        elif transport == "sse":
+            logger.info(f"Starting SSE server on {host}:{port}")
+            mcp.settings.host = host
+            mcp.settings.port = port
+            mcp.run(transport="sse")
+        elif transport == "stdio":
+            logger.info("Starting STDIO server...")
+            mcp.run(transport="stdio")
+        else:
+            raise ValueError(f"Unsupported transport: {transport}. Use 'stdio', 'http', or 'sse'")
+    except Exception as e:
+        logger.error(f"Failed to run server: {str(e)}")
+        raise
+
+
 def main():
-    """Main entry point for the server."""
+    """Main entry point for the server - defaults to stdio for backward compatibility."""
     logger.info("Starting Monarch Money MCP Server...")
     try:
         mcp.run()
@@ -451,4 +491,11 @@ def main():
 app = mcp
 
 if __name__ == "__main__":
-    main()
+    # Check if arguments are provided
+    import sys
+    if len(sys.argv) > 1:
+        # Use typer CLI if arguments provided
+        cli_app()
+    else:
+        # Default to stdio for backward compatibility
+        main()
