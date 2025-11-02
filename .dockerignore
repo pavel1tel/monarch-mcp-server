@@ -45,9 +45,7 @@ ehthumbs.db
 Thumbs.db
 
 # Documentation
-README.md
 docs/
-*.md
 
 # Development files
 .pre-commit-config.yaml
