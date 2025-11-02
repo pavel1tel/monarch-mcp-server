@@ -31,5 +31,8 @@ EXPOSE 8080
 # ENV MONARCH_PASSWORD=your-password
 # Or use MONARCH_TOKEN for direct token authentication
 
+# Set Python path to include src directory
+ENV PYTHONPATH=/app/src
+
 # Run the HTTP server
 CMD ["python", "-m", "monarch_mcp_server.server", "--transport", "http", "--host", "0.0.0.0", "--port", "8080", "--path", "/mcp"]
