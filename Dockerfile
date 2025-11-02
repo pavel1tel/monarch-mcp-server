@@ -10,16 +10,13 @@ RUN apt-get update && apt-get install -y \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency files
-COPY requirements.txt pyproject.toml ./
+# Copy project files
+COPY requirements.txt pyproject.toml README.md ./
+COPY src/ ./src/
+COPY login_setup.py ./
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir -e .
-
-# Copy source code
-COPY src/ ./src/
-COPY login_setup.py ./
 
 # Create a non-root user
 RUN useradd --create-home --shell /bin/bash app \
